@@ -217,6 +217,10 @@ footer {
     margin-bottom: 0.5rem;
 }
 
+#error_124e14663bd78941dd003bc47c2f6ce634a3846c {
+    display: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     h1 {
