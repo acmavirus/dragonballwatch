@@ -71,6 +71,62 @@ h1 {
     background: #000;
 }
 
+/* Video Controls Overlay */
+.video-controls-overlay {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.control-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+}
+
+.skip-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.skip-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--text-muted);
+}
+
+.nav-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.nav-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.nav-btn:disabled {
+    background: #4a5568;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.5;
+}
+
 .video-wrapper video {
     position: absolute;
     top: 0;
@@ -229,5 +285,27 @@ footer {
 
     .episode-grid {
         grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    }
+
+    .video-controls-overlay {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .nav-buttons {
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .control-btn {
+        flex: 1;
+        padding: 0.7rem 0.4rem;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    .skip-btn {
+        width: 100%;
     }
 }

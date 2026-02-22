@@ -4,7 +4,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const episodeTitle = document.getElementById('episode-title');
     const currentEpDisplay = document.getElementById('current-ep-display');
     const playerPlaceholder = document.getElementById('player-placeholder');
+    const skipIntroBtn = document.getElementById('skip-intro-btn');
+    const prevEpBtn = document.getElementById('prev-ep-btn');
+    const nextEpBtn = document.getElementById('next-ep-btn');
     const totalEpisodes = 131;
+
+    let currentEpisodeNumber = 1;
+
+    // Skip Intro (1:20 = 80 seconds)
+    skipIntroBtn.onclick = () => {
+        if (mainVideo) {
+            mainVideo.currentTime = 80;
+            mainVideo.play();
+        }
+    };
+
+    // Next/Prev Buttons
+    prevEpBtn.onclick = () => {
+        if (currentEpisodeNumber > 1) {
+            loadEpisode(currentEpisodeNumber - 1);
+        }
+    };
+
+    nextEpBtn.onclick = () => {
+        if (currentEpisodeNumber < totalEpisodes) {
+            loadEpisode(currentEpisodeNumber + 1);
+        }
+    };
 
     // Link video từ S3
     const getEpisodeLink = (epNumber) => {
@@ -14,8 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadEpisode = (number, retryWithFix = false) => {
+        currentEpisodeNumber = number;
         const formattedNumber = String(number).padStart(3, '0');
         const link = `https://newwiki.s3-hcm-r2.s3cloud.vn/anime/dbsvietsub/DBS-vietsub-${formattedNumber}${retryWithFix ? '-fix' : ''}.mp4`;
+
+        // Cập nhật trạng thái nút điều hướng
+        prevEpBtn.disabled = number <= 1;
+        nextEpBtn.disabled = number >= totalEpisodes;
 
         // Hiện trạng thái loading
         playerPlaceholder.style.display = 'flex';
@@ -27,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Cập nhật link cho thẻ video
         mainVideo.src = link;
+        mainVideo.volume = 0.5; // Mặc định âm thanh 50%
         mainVideo.load();
 
         // Thử tự động phát
@@ -36,9 +68,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Khi video đã sẵn sàng phát
+        let hasSkippedIntro = false;
         mainVideo.oncanplay = () => {
             playerPlaceholder.style.display = 'none';
             mainVideo.style.opacity = '1';
+
+            // Tự động nhảy tới 1:20 (80s) khi bắt đầu tập mới
+            if (!hasSkippedIntro) {
+                mainVideo.currentTime = 80;
+                hasSkippedIntro = true;
+            }
         };
 
         // Khi có lỗi tải video (Xử lý fallback 404)
@@ -64,15 +103,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Gán lại event check 21:40 cho mỗi tập mới
+        mainVideo.ontimeupdate = checkTimeSkip;
+
         // Lưu tiến trình
         localStorage.setItem('dbs_last_watched', number);
     };
 
-    // Tự động chuyển tập khi kết thúc
+    function checkTimeSkip() {
+        // 21:40 = 1300 seconds
+        if (mainVideo.currentTime >= 1300) {
+            const next = currentEpisodeNumber + 1;
+            if (next <= totalEpisodes) {
+                mainVideo.ontimeupdate = null; // Tránh gọi lặp lại
+                loadEpisode(next);
+            }
+        }
+    }
+
+    // Tự động chuyển tập khi kết thúc hoặc đạt tới 21:40 (1300s)
     mainVideo.onended = () => {
-        const current = parseInt(localStorage.getItem('dbs_last_watched') || 1);
-        if (current < totalEpisodes) {
-            loadEpisode(current + 1);
+        const next = currentEpisodeNumber + 1;
+        if (next <= totalEpisodes) {
+            loadEpisode(next);
         }
     };
 
