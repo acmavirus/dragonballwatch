@@ -10,33 +10,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const getEpisodeLink = (epNumber) => {
         // Đảm bảo số tập luôn có 3 chữ số (001, 002, ...)
         const formattedNumber = String(epNumber).padStart(3, '0');
-        return `https://newwiki.s3-hcm-r2.s3cloud.vn/anime/dbsvietsub/DBS-vietsub-${formattedNumber}-fix.mp4`;
+        return `https://newwiki.s3-hcm-r2.s3cloud.vn/anime/dbsvietsub/DBS-vietsub-${formattedNumber}.mp4`;
     };
 
-    const loadEpisode = (number) => {
-        const link = getEpisodeLink(number);
+    const loadEpisode = (number, retryWithFix = false) => {
+        const formattedNumber = String(number).padStart(3, '0');
+        const link = `https://newwiki.s3-hcm-r2.s3cloud.vn/anime/dbsvietsub/DBS-vietsub-${formattedNumber}${retryWithFix ? '-fix' : ''}.mp4`;
 
         // Hiện trạng thái loading
         playerPlaceholder.style.display = 'flex';
-        currentEpDisplay.textContent = number;
+        playerPlaceholder.innerHTML = `<div class="loader"></div><p>Đang tải video tập <span id="current-ep-display">${number}</span>...</p>`;
         mainVideo.style.opacity = '0.5';
 
         // Cập nhật tiêu đề
-        episodeTitle.textContent = `Đang xem: Tập ${number}`;
+        episodeTitle.textContent = `Đang xem: Tập ${number}${retryWithFix ? ' (Fix)' : ''}`;
 
         // Cập nhật link cho thẻ video
         mainVideo.src = link;
         mainVideo.load();
 
-        // Thử tự động phát (có thể bị trình duyệt chặn nếu không mute)
+        // Thử tự động phát
         const playPromise = mainVideo.play();
         if (playPromise !== undefined) {
-            playPromise.then(_ => {
-                // Tự động phát thành công
-            }).catch(error => {
-                // Tự động phát bị chặn, chờ user click
-                console.log("Autoplay prevented");
-            });
+            playPromise.then(_ => { }).catch(e => console.log("Autoplay blocked"));
         }
 
         // Khi video đã sẵn sàng phát
@@ -45,9 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
             mainVideo.style.opacity = '1';
         };
 
-        // Khi có lỗi tải video
+        // Khi có lỗi tải video (Xử lý fallback 404)
         mainVideo.onerror = () => {
-            playerPlaceholder.innerHTML = `<p style="color: #ff4444;">Lỗi: Không thể tải video tập ${number}</p>`;
+            if (!retryWithFix) {
+                console.log(`Tập ${number} không tìm thấy link chuẩn, đang thử link -fix...`);
+                loadEpisode(number, true); // Thử lại với -fix
+            } else {
+                playerPlaceholder.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color: #ff4444; font-weight: bold; margin-bottom: 10px;">Lỗi: Không tìm thấy video tập ${number}</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Đã thử cả 2 nguồn nhưng đều thất bại.</p>
+                    </div>
+                `;
+            }
         };
 
         // Cập nhật nút active
